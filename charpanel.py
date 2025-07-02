@@ -1,7 +1,3 @@
-import sys
-
-import platform
-
 from mcedit import *
 from constants import *
 from younyao_in import YounyaoIn
@@ -15,57 +11,7 @@ from PyQt5.QtGui import QKeySequence, QFont, QTextCursor, QColor, QIcon, QTextCh
     QTextDocumentFragment, QTextBlock
 from options import *
 from constants import *
-import  math
-
-
-class SignInfoEditor(QWidget):
-    sign : Sign
-    app : SignApp
-    def __init__(self, parent=None,app : SignApp = None):
-        super(SignInfoEditor, self).__init__(parent)
-
-        self.app = app
-
-        layout = QGridLayout()
-        self.sign_name = QLineEdit()
-        self.sign_name.setPlaceholderText("Sign name")
-        self.sign_name.setText('Custom Sign')
-        self.sign_name.textChanged.connect(self.onSignChange)
-
-        self.sign_combo = QComboBox()
-        self.createSignCombo(self.sign_combo)
-        self.sign_combo.setCurrentIndex(0)
-        self.sign_combo.currentIndexChanged.connect(self.onSignChange)
-
-        layout.addWidget(QLabel('Sign Name'),1,1,1,1)
-        layout.addWidget(self.sign_name,1,2,1,1)
-        layout.addWidget(QLabel('Sign Type'),2,1,1,1)
-        layout.addWidget(self.sign_combo,2,2,1,1)
-
-        self.setLayout(layout)
-
-    def createSignCombo(self, combo):
-        global types,names
-
-        for i in range(len(types)):
-            combo.addItem(QIcon("./src/%s.png" % types[i - i % 2]), '%s Sign' % names[i])
-
-    def onSignChange(self):
-        global types,names
-        i = self.sign_combo.currentIndex()
-        self.sign.name = self.sign_name.text()
-        self.sign.type = types[i] + '_sign'
-
-        filename = "./src/%s.png" % types[i - i % 2]
-        sheet = """QTextEdit { background-color: lightgray;
-                                               font-size: %dpx; 
-                                              font-family: 'mcprev','unimc';
-                                              padding: 0;
-                                              margin-bottom: 0px;
-                                              background: url("%s") repeat top center;
-                                              }""" % (point_size, filename)
-        self.app.getCurrentEditor().edit_field.setStyleSheet(sheet)
-        self.app.getCurrentEditor().updateCommand()
+import math
 
 class CharacterPanel(QTabWidget):
     app : SignApp
@@ -265,8 +211,8 @@ class CharacterPanel(QTabWidget):
         self.loadChars(type_index,self.current_category[type_index],page=self.sender().value())
 
     def onCharClicked(self):
-        editor = self.app.getCurrentEditor()
-        cursor : QTextCursor = editor.edit_field.textCursor()
+        editor = self.app.currentEditPanel()
+        cursor : QTextCursor = editor.currentEditor().textCursor()
 
         format = QTextCharFormat()
         format.setFontFamilies(["mcprev", "unimc"])
@@ -274,4 +220,3 @@ class CharacterPanel(QTabWidget):
         cursor.insertText(self.sender().text())
 
         #print(self.sender().t)
-

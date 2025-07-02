@@ -4,10 +4,7 @@ import platform
 
 from sign_text_edit import SignTextEdit
 from mcedit import *
-from constants import *
-from younyao_in import YounyaoIn
-from insert_pic import PicInsert
-from cmd2htm import parseCommand
+
 
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import Qt
@@ -15,16 +12,7 @@ from PyQt5.QtGui import QKeySequence, QFont, QTextCursor, QColor, QIcon, QTextCh
     QTextDocumentFragment, QTextBlock
 from options import *
 from constants import *
-
-class EditPanel(QWidget):
-    edit_field : MCEdit
-    result_field : QPlainTextEdit
-    options : Options
-    def __init__(self, parent = ...):
-        super().__init__(parent)
-
-    def updateCommand(self):
-        pass
+from editpanel import *
 
 class SignEditPanel(EditPanel):
     text_panel: SignEdit
@@ -58,6 +46,8 @@ class SignEditPanel(EditPanel):
         global win_width, win_height, point_size
         global names, types
 
+        self.name = 'Sign'
+
         grid = QGridLayout()
         grid.setSpacing(10)
 
@@ -65,7 +55,9 @@ class SignEditPanel(EditPanel):
         self.text_panel = SignEdit(parent=self)
         self.text_panel.sign = self.sign
         self.text_panel.textChanged.connect(self.onTextChange)
-        #self.text_panel.cursorPositionChanged.connect(self.onCursorPosChange)
+
+        self.edit_fields = []
+        self.edit_fields.append(self.text_panel)
 
         # ----side control----
         face_panel = QWidget(self)
@@ -134,6 +126,12 @@ class SignEditPanel(EditPanel):
 
         self.edit_field = self.text_panel
         self.result_field = self.result_panel
+
+    def currentEditor(self) -> MCEdit:
+        return self.text_panel
+
+    def document(self) -> Document:
+        return self.sign
 
     def onFaceChange(self):
         if self.both_side_check.isChecked():

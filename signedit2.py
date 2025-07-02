@@ -16,7 +16,9 @@ from PyQt5.QtGui import QKeySequence, QFont, QTextCursor, QColor, QIcon, QTextCh
 import json
 from options import *
 from app import *
-from panels import *
+from signinfo import *
+from charpanel import *
+from editpanel import *
 
 class mainwin(QMainWindow):
     edit_panel : SignEditPanel
@@ -24,7 +26,9 @@ class mainwin(QMainWindow):
     app : SignApp
     toolbar : QToolBar
     options : Options
-    
+
+    #toolbar buttons
+    newtab :    QWidgetAction
     bold   :    QAction
     italic :    QAction
     underline   : QAction
@@ -36,6 +40,9 @@ class mainwin(QMainWindow):
     colorbutton : QToolButton
     special_char: QWidget
     insert      : QAction
+
+    #edit tab
+    tabs : QTabWidget
     
     def __init__(self, app):
         super().__init__()
@@ -43,26 +50,35 @@ class mainwin(QMainWindow):
         self.options = Options()
         self.options.loadoptions()
 
-        self.edit_panel = SignEditPanel(parent=self)
-        self.edit_panel.options = self.options
-        self.edit_panel.sign.options = self.options
+        self.tabs = QTabWidget()
+        self.tabs.setTabsClosable(True)
+        self.tabs.tabCloseRequested.connect(self.onTabClosing)
+        self.tabs.currentChanged.connect(self.onTabChange)
 
-        self.app.setCurrentEditor(self.edit_panel)
+        #default editor panel
+        edit_panel = SignEditPanel(parent=self)
+        edit_panel.options = self.options
+        edit_panel.sign.options = self.options
+        self.addEdiorPanel(edit_panel)
 
-        #sign info editor
+        self.app.setCurrentPanel(edit_panel)
+
+
+        #default side panel: sign info editor
         self.sign_info = SignInfoEditor(parent=self,app = self.app)
         self.sign_info_dock = QDockWidget('Sign Info', self)
         self.sign_info_dock.setWidget(self.sign_info)
-        self.sign_info.sign = self.edit_panel.sign
 
-        #character picker
+        #default side panel: character picker
         self.char_picker = CharacterPanel(parent=self,app = self.app)
         self.char_picker_dock = QDockWidget('Character Picker', self)
         self.char_picker_dock.setWidget(self.char_picker)
 
-        self.edit_panel.text_panel.cursorPositionChanged.connect(self.onCursorPosChanged)
-        
-        self.setCentralWidget(self.edit_panel)
+
+        #add tabs
+        self.setCentralWidget(self.tabs)
+
+        #add default side panels
         self.addDockWidget(Qt.RightDockWidgetArea, self.sign_info_dock)
         self.addDockWidget(Qt.RightDockWidgetArea, self.char_picker_dock)
 
@@ -73,6 +89,27 @@ class mainwin(QMainWindow):
 
     def createToolBar(self):
         self.toolbar = self.addToolBar('Toolbar')
+        font1 = QFont("minecraft", pointSize=18);
+        font1.setBold(True)
+
+        #add new tab
+        self.newtab = QWidgetAction(self)
+        self.newtab.setText('+')
+        self.newtab.setFont(font1)
+
+        newtab_button = QToolButton(self)
+        newtab_button.setText('+')
+        newtab_button.setFont(font1)
+        newtab_button.setPopupMode(QToolButton.InstantPopup)
+        newtab_button.setAutoRaise(True)
+
+        tabmenu = QMenu(newtab_button)
+        self.createNewTableMenu(tabmenu)
+        newtab_button.setMenu(tabmenu)
+
+        self.newtab.setToolTip('New tab')
+        self.newtab.setDefaultWidget(newtab_button)
+
 
         #bold
         self.bold = QAction(self)
@@ -80,7 +117,7 @@ class mainwin(QMainWindow):
         self.bold.setShortcut(QKeySequence.Bold)
         self.bold.setToolTip("Bold")
         self.bold.setCheckable(True)
-        font1 = QFont("minecraft",pointSize=18);font1.setBold(True)
+
         self.bold.setFont(font1)
         self.bold.triggered.connect(self.onBold)
 
@@ -93,6 +130,7 @@ class mainwin(QMainWindow):
         self.italic.setFont(QFont("minecraft",pointSize=18,italic=True))
         self.italic.triggered.connect(self.onItalic)
 
+        #underline
         self.underline = QAction(self)
         self.underline.setText("U")
         self.underline.setShortcut(QKeySequence.Underline)
@@ -156,6 +194,7 @@ class mainwin(QMainWindow):
         self.textcolor.setToolTip("Color")
         self.textcolor.setDefaultWidget(self.colorbutton)
 
+        self.toolbar.addAction(self.newtab)
         self.toolbar.addAction(self.bold)
         self.toolbar.addAction(self.italic)
         self.toolbar.addAction(self.underline)
@@ -169,6 +208,14 @@ class mainwin(QMainWindow):
 
 
         self.toolbar.setStyleSheet("QToolBar { spacing: 2px; }")
+
+    def createNewTableMenu(self, menu : QMenu):
+        newsign = QAction(self)
+        newsign.setText('Sign editor')
+        newsign.setData('sign')
+        newsign.triggered.connect(self.onNewTab)
+
+        menu.addAction(newsign)
 
     def createColorMenu(self, menu: QMenu) -> None:
         global colors, desp
@@ -213,10 +260,35 @@ class mainwin(QMainWindow):
         combo.setCurrentIndex(0)
 
     def currentEditPanel(self) -> EditPanel:
-        return self.edit_panel
+        return self.tabs.currentWidget()
+
+    def addEdiorPanel(self,panel : EditPanel):
+        for editor in panel.edit_fields:
+            editor.cursorPositionChanged.connect(self.onCursorPosChanged)
+        self.tabs.addTab(panel, panel.name)
+
+    def onTabChange(self):
+        tab = self.tabs.currentWidget()
+        self.app.setCurrentPanel(tab)
+
+    def onNewTab(self):
+        sender = self.sender()
+        tab_type = sender.data() #should be string
+
+        if tab_type == 'sign':
+            panel = SignEditPanel(parent=self)
+            panel.options = self.options
+            panel.sign.options = self.options
+
+            self.addEdiorPanel(panel)
+        else:
+            raise AssertionError('Unknown tab type: ' + tab_type)
+
+    def onTabClosing(self,index):
+        self.tabs.removeTab(index)
 
     def onColorClick(self):
-        textpanel = self.currentEditPanel().edit_field
+        textpanel = self.currentEditPanel().currentEditor()
         cursor: QTextCursor = textpanel.textCursor()
         sender = self.sender().sender().parent()
         style = sender.styleSheet()
@@ -232,7 +304,7 @@ class mainwin(QMainWindow):
             textpanel.setTextColor(QColor(color))
 
     def onMoreColorClick(self):
-        textpanel = self.currentEditPanel().edit_field
+        textpanel = self.currentEditPanel().currentEditor()
         cursor: QTextCursor = textpanel.textCursor()
 
         dlg = QColorDialog(textpanel.textColor(), self)
@@ -259,7 +331,7 @@ class mainwin(QMainWindow):
         self.dialog.show()
 
     def onBold(self, ischecked):
-        textpanel = self.currentEditPanel().edit_field
+        textpanel = self.currentEditPanel().currentEditor()
         cursor : QTextCursor = textpanel.textCursor()
 
         if not cursor.selection().isEmpty():
@@ -278,7 +350,7 @@ class mainwin(QMainWindow):
                 textpanel.setFontWeight(50)
 
     def onItalic(self, ischecked):
-        textpanel = self.currentEditPanel().edit_field
+        textpanel = self.currentEditPanel().currentEditor()
         cursor : QTextCursor = textpanel.textCursor()
 
         if not cursor.selection().isEmpty():
@@ -297,7 +369,7 @@ class mainwin(QMainWindow):
                 textpanel.setFontItalic(False)
 
     def onUnderline(self, ischecked):
-        textpanel = self.currentEditPanel().edit_field
+        textpanel = self.currentEditPanel().currentEditor()
         cursor : QTextCursor = textpanel.textCursor()
 
         if not cursor.selection().isEmpty():
@@ -317,7 +389,7 @@ class mainwin(QMainWindow):
 
     def onStrikeline(self, ischecked):
         global pointSize
-        textpanel = self.currentEditPanel().edit_field
+        textpanel = self.currentEditPanel().currentEditor()
         cursor : QTextCursor = textpanel.textCursor()
 
         if not cursor.selection().isEmpty():
@@ -340,15 +412,17 @@ class mainwin(QMainWindow):
 
     def onSystemFontChange(self,index):
         global point_size
-        textpanel = self.currentEditPanel().edit_field
+        textpanel = self.currentEditPanel().currentEditor()
         cursor: QTextCursor = textpanel.textCursor()
         selectedfont = self.systemfontcombo.currentText()
 
 
         if not cursor.selection().isEmpty(): #something is selected
             if selectedfont == 'default':
+                print('Default font selected')
                 textformat = QTextCharFormat()
-                textformat.setFontFamily('') #default font
+                #textformat.setFontFamily('') #default font
+                textformat.setFontFamilies(["mcprev", "unimc"])
                 cursor.beginEditBlock()
                 cursor.mergeCharFormat(textformat)
                 cursor.endEditBlock()
@@ -371,10 +445,8 @@ class mainwin(QMainWindow):
                 #textpanel.setFontFamily(fontfamily)
                 textpanel.setCurrentCharFormat(textformat)
 
-
-
     def onCursorPosChanged(self):
-        textpanel = self.currentEditPanel().edit_field
+        textpanel = self.currentEditPanel().currentEditor()
         self.italic.setChecked(textpanel.fontItalic())
         self.underline.setChecked(textpanel.fontUnderline())
         font = textpanel.currentFont()
@@ -382,25 +454,24 @@ class mainwin(QMainWindow):
         self.bold.setChecked(font.bold())
 
         #set font
-        family = font.family()
         families = font.families()
-        #if family != 'minecraft' and family != 'unifont':
-        #    fontname = self.options.reverse_fontlist[family]
-        #    self.systemfontcombo.setCurrentText(fontname)
-        #else:
-        #    self.systemfontcombo.setCurrentText('default')
 
         f = families_str(families)
         if f != "'mcprev','unimc'":
-            fontname = self.options.reverse_fontlist[f]
-            self.systemfontcombo.setCurrentText(fontname)
+            if f in self.options.reverse_fontlist.keys():
+                fontname = self.options.reverse_fontlist[f]
+                self.systemfontcombo.setCurrentText(fontname)
+            else:#font not supported
+                print('Font not supported')
+                self.systemfontcombo.setCurrentText('default')
         else:
             self.systemfontcombo.setCurrentText('default')
+
     def onFontChanged(self,index):
-        textpanel = self.currentEditPanel().edit_field
+        textpanel = self.currentEditPanel().currentEditor()
         textpanel.font = index #set auto font conversion of mcedit
 
-        cursor = self.edit_panel.text_panel.textCursor()
+        cursor = self.currentEditPanel().currentEditor().textCursor()
         if not cursor.selection().isEmpty(): #some text selected, convert them to specific font
             start = cursor.selectionStart()
             end = cursor.selectionEnd()
@@ -423,9 +494,7 @@ class mainwin(QMainWindow):
             cursor.endEditBlock()
             cursor.setPosition(start)
             cursor.setPosition(end ,QTextCursor.KeepAnchor)
-            self.edit_panel.text_panel.setTextCursor(cursor)
-
-
+            self.currentEditPanel().currentEditor().setTextCursor(cursor)
 
 def mapFont(text : str, target : Fonts):
     '''
@@ -464,7 +533,6 @@ def mapFont(text : str, target : Fonts):
         else:
             result += conv_c
     return result
-
 
 def main():
     global point_size,win_width,win_height
