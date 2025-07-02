@@ -1,0 +1,17 @@
+{
+  "fonts":
+  [
+    {
+      "name" : "test",
+      "family" : "Comic Sans MS,宋体"
+    }
+  ],
+  "extra_fonts":
+  [
+    "./src/mcprev.otf",
+    "./src/mcprev-bold.otf",
+    "./src/unimc.otf",
+    "./src/unimc-bold.otf"
+  ],
+  "default_version" : "1.20"
+}
