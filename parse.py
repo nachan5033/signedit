@@ -57,6 +57,7 @@ class MyHTMLParser(HTMLParser):
         self.tree = []
         self.reset_attr()
         self.line_count = 0
+        self.commands = []
         
         self.in_content = False
 
@@ -187,8 +188,79 @@ def hasProperty(comp : dict,property : str):
         return comp[property] != False and comp[property] is not None
     return False
 
-def treeToJsonText(tree : list):
-    pass
+def treeToJsonText120(tree : list | dict):
+    '''
+    Convert tree to jsontext
+    Used in textdisplay
+    '''
+    i = 0
+    result_commands = ''
+    temp = "'[%s]'"
+    if type(tree) == dict:
+        tree = [tree]
+    num_lines = len(tree)
+    for i in range(num_lines):
+
+        line = tree[i]
+        if type(line) == dict:
+            line = [line]
+        line : list
+
+        line_result ="%s"
+        line_commands = ''
+        comp_count = len(line) #num of parts in this line
+        if comp_count == 0: #nothing in this line
+            line_result = line_result%'""'
+            result_commands += line_result
+            if i < num_lines - 1: result_commands += ',"\\\\n",'#not the last line, append a line break
+            continue
+        for j in range(comp_count):
+            comp_command = ''
+            comp = line[j]
+            comp : dict
+            text = ''
+            if 'text' in comp.keys():
+                text = comp['text']
+                text = trim_text(text)
+            else:
+                text = ''
+            is_bold = hasProperty(comp, 'bold')
+            is_italic = hasProperty(comp, 'italic')
+            is_underline = hasProperty(comp, 'underline')
+            is_strike = hasProperty(comp, 'strikethrough')
+            is_color = hasProperty(comp, 'color')
+            is_command = hasProperty(comp, 'command')
+            is_font = hasProperty(comp, 'font')
+            if not (is_bold or is_italic or is_underline or is_strike or is_color or is_command or is_font):
+                #no property at all
+                comp_command = '"%s"'
+                comp_command = comp_command%trim_text(text)
+                line_commands += comp_command
+                if j < comp_count - 1: line_commands += ','  # not the last component
+            else:
+                if j == 0 and not is_command: #the first comp has some properties
+                    line_commands += '"",'  #bug of MC
+                comp_command = '{"text":"%s"' #no }
+                comp_command = comp_command%trim_text(text)
+                if is_bold: comp_command += ',"bold":true'
+                if is_italic: comp_command += ',"italic":true'
+                if is_underline: comp_command += ',"underlined":true'
+                if is_strike: comp_command += ',"strikethrough":true'
+                if is_color: comp_command += ',"color":"%s"'%comp['color']
+                if is_font: comp_command += ',"font":"%s"'%comp['font']
+                if is_command:
+                    command_temp = ',"clickEvent":{"action":"run_command","value":"%s"}'
+                    embedded_command = comp['command']
+                    embedded_command = trim_command(embedded_command)
+                    comp_command += command_temp %  embedded_command
+                comp_command += '}'
+                line_commands += comp_command
+                if j < comp_count - 1: line_commands += ','  # not the last component
+        line_result = line_result%line_commands
+        result_commands += line_result
+        if i < num_lines - 1: result_commands += ',"\\\\n",'#not the last line, append a line break
+        continue
+    return temp % result_commands
 
 def treeToCommand120(tree : dict):
     #/give @a oak_sign{BlockEntityTag:{front_text:
@@ -300,3 +372,17 @@ def treeToCommand120(tree : dict):
 
 
     #front and back text
+
+if __name__ == '__main__':
+    parser = MyHTMLParser()
+    lines = []
+    htm = ''
+    with open('debug.htm', 'r') as f:
+        lines = f.readlines()
+
+    for line in lines:
+        htm += line
+    parser.feed(htm)
+    tree = parser.tree
+    t = treeToJsonText120(tree)
+    print(t)
