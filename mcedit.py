@@ -1,15 +1,19 @@
 
+import lxml.etree
+import lxml.html
 from constants import *
 from insert_pic import PicInsert
 from parse import *
 
-from PyQt5.QtWidgets import QTextEdit, QTextBrowser, QWidget,QPlainTextEdit
+from PyQt5.QtWidgets import QTextEdit, QTextBrowser, QWidget,QPlainTextEdit,QStyle
 from PyQt5.QtCore import QMimeData,Qt,QUrl
-from PyQt5.QtGui import QTextCharFormat,QTextBlockFormat
+from PyQt5.QtGui import QTextCharFormat,QTextBlockFormat, QFont, QColor
 from PyQt5 import QtGui
 from options import Options
 
 import json
+
+import lxml, re
 
 
 class SignEdit:
@@ -165,30 +169,62 @@ class MCEdit(QTextEdit):
     def getJsonText(self, opt : Options) -> str:
         return ''
 
+    def _removeFontSizeData(self, html_data : str):
+        html = lxml.html.fromstring(html_data)
 
+        #Replace h1-h5 label with a <p> label
+
+        elements = html.xpath('//h1|//h2|//h3|//h4|//h5')
+        for element in elements:
+            p = lxml.html.Element('p')
+            p.text = element.text
+            for child in element.getchildren():
+                p.append(child)
+            element.getparent().replace(element, p)
+
+        
+        #replace font weights 
+        elements = html.xpath('//*[@style]')
+        for element in elements:
+            exist_style = element.attrib.get("style", "")
+            index = exist_style.find('font-size')
+            if index != -1:
+                font_size = re.match("font\\-size:[ A-Za-z0-9\\-_]*;", exist_style[index:])
+                if font_size is not None:
+                    new_style = exist_style.replace(font_size.group(), '')
+                    element.attrib["style"] = new_style
+                    exist_style = new_style
+
+        return lxml.html.tostring(html).decode()
     
     def insertFromMimeData(self, source: QMimeData | None) -> None:
         global point_size
         newdata = QMimeData()
         if source.hasHtml():
             html = source.html()
+            html = self._removeFontSizeData(html)
     
             doc = QTextEdit()
             doc.setHtml(html)
-
-            textformat = QTextCharFormat()
-            textformat.setFontFamilies(["mcprev","unimc"])
-            textformat.setFontPointSize(point_size - 14)
-            textformat.clearBackground()
-
-            block  = QTextBlockFormat()
-            block.clearBackground()
-            block.setAlignment(Qt.AlignCenter)
-
+            
             cursor = doc.textCursor()
             cursor.select(QtGui.QTextCursor.Document)
-            cursor.setBlockFormat(block)
-            cursor.mergeCharFormat(textformat)
+            char_format = QTextCharFormat()
+            block_format = cursor.blockFormat()
+
+            block_format.clearBackground()
+            block_format.setAlignment(Qt.AlignCenter)
+
+            char_format.setFontFamily('')
+            char_format.setFontFamilies(['mcprev', 'unimc'])
+            char_format.setBackground(block_format.background())
+
+            cursor.setBlockFormat(block_format)
+            cursor.mergeCharFormat(char_format)
+
+            font = QFont()
+            font.setPixelSize(point_size)
+            doc.setFont(font)
             
             newdata.setHtml(doc.toHtml())
             return super().insertFromMimeData(newdata)
@@ -227,6 +263,7 @@ class SignEdit(MCEdit):
 
         self.face_mode = Facemodes.FRONT
         self.waxed = False
+        self.sign = parent.sign
         
         self.syncStyle()
 
@@ -242,13 +279,17 @@ class SignEdit(MCEdit):
         return ''
     
     def syncStyle(self):
-        sheet = """QTextEdit { background-color: lightgray;
-                                       font-size: %dpx; 
+
+        sign_type = self.sign.type
+        sign_type = sign_type.replace('_hanging_sign', '')
+        sign_type = sign_type.replace('_sign','')
+        sheet = f"""QTextEdit {{ background-color: lightgray;
+                                       font-size: {point_size}px; 
                                       font-family: 'mcprev','unimc';
                                       padding: 0;
                                       margin-bottom: 0px;
-                                      background: url("./src/oak.png") repeat top center;
-                                      }""" % point_size
+                                      background: url("./src/{sign_type}.png") repeat top center;
+                                      }}""" 
 
         self.setStyleSheet(sheet)
         self.setAlignment(Qt.AlignCenter)
