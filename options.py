@@ -55,3 +55,5 @@ class Options:
 
             #load default version
             self.default_version = opt['default_version']
+
+global_options = Options()

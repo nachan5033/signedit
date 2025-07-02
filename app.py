@@ -1,7 +1,7 @@
 from mcedit import *
 from PyQt5.QtWidgets import *
 
-from signeditpanel import *
+from editpanel import *
 from options import *
 
 class SignApp(QApplication):

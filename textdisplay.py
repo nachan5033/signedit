@@ -3,32 +3,27 @@ import sys
 import platform
 
 from mcedit import *
+
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QKeySequence, QFont, QTextCursor, QColor, QIcon, QTextCharFormat, QClipboard, \
     QTextDocumentFragment, QTextBlock
 from options import *
 from constants import *
+from editpanel import *
+from resultdisplay import *
+from mcedit import *
 
-class EditPanel(QWidget):
-    edit_fields : list[MCEdit]
-    #list of MCEdits in the panel
-    options : Options
+class TextDisplayPanel(EditPanel):
 
-    name : str
-    doc : Document
+    text_panel : MCEdit
 
-
-    def __init__(self, parent = ...):
+    def __init__(self, parent):
         super().__init__(parent)
-        self.name = 'Undefined'
-        self.edit_fields = []
+        self.name = "Text Display"
+        self.text_panel = MCEdit(parent)
 
-    def updateCommand(self):
-        pass
+        self.edit_fields.append(self.text_panel)
 
     def currentEditor(self) -> MCEdit:
-        pass
-
-    def document(self) -> Document:
-        pass
+        return self.text_panel

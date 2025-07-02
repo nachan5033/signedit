@@ -1,13 +1,12 @@
 import sys
 
 import platform
-from sign_text_edit import SignTextEdit
 from mcedit import MCEdit, SignEdit
 from signeditpanel import *
 from constants import *
+from textdisplay import TextDisplayPanel
 from younyao_in import YounyaoIn
 from insert_pic import PicInsert
-from cmd2htm import parseCommand
 
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import Qt
@@ -21,7 +20,6 @@ from charpanel import *
 from editpanel import *
 
 class mainwin(QMainWindow):
-    edit_panel : SignEditPanel
     sign_info : SignInfoEditor
     app : SignApp
     toolbar : QToolBar
@@ -49,9 +47,14 @@ class mainwin(QMainWindow):
         self.app = app
         self.options = Options()
         self.options.loadoptions()
+        self.app.setOptions(self.options)
+
+        global global_options
+        global_options = self.options
 
         self.tabs = QTabWidget()
         self.tabs.setTabsClosable(True)
+        self.tabs.setMovable(True)
         self.tabs.tabCloseRequested.connect(self.onTabClosing)
         self.tabs.currentChanged.connect(self.onTabChange)
 
@@ -59,7 +62,7 @@ class mainwin(QMainWindow):
         edit_panel = SignEditPanel(parent=self)
         edit_panel.options = self.options
         edit_panel.sign.options = self.options
-        self.addEdiorPanel(edit_panel)
+        self.addEditorPanel(edit_panel)
 
         self.app.setCurrentPanel(edit_panel)
 
@@ -89,17 +92,16 @@ class mainwin(QMainWindow):
 
     def createToolBar(self):
         self.toolbar = self.addToolBar('Toolbar')
-        font1 = QFont("minecraft", pointSize=18);
-        font1.setBold(True)
+        font0 = QFont("mcprev", pointSize=18)
 
         #add new tab
         self.newtab = QWidgetAction(self)
         self.newtab.setText('+')
-        self.newtab.setFont(font1)
+        self.newtab.setFont(font0)
 
         newtab_button = QToolButton(self)
         newtab_button.setText('+')
-        newtab_button.setFont(font1)
+        newtab_button.setFont(font0)
         newtab_button.setPopupMode(QToolButton.InstantPopup)
         newtab_button.setAutoRaise(True)
 
@@ -118,6 +120,8 @@ class mainwin(QMainWindow):
         self.bold.setToolTip("Bold")
         self.bold.setCheckable(True)
 
+        font1 = QFont("mcprev", pointSize=18);
+        font1.setBold(True)
         self.bold.setFont(font1)
         self.bold.triggered.connect(self.onBold)
 
@@ -127,7 +131,7 @@ class mainwin(QMainWindow):
         self.italic.setShortcut(QKeySequence.Italic)
         self.italic.setToolTip("Italic")
         self.italic.setCheckable(True)
-        self.italic.setFont(QFont("minecraft",pointSize=18,italic=True))
+        self.italic.setFont(QFont("mcprev",pointSize=18,italic=True))
         self.italic.triggered.connect(self.onItalic)
 
         #underline
@@ -136,7 +140,7 @@ class mainwin(QMainWindow):
         self.underline.setShortcut(QKeySequence.Underline)
         self.underline.setToolTip("Underline")
         self.underline.setCheckable(True)
-        font2 = QFont("minecraft",pointSize=18);font2.setUnderline(True)
+        font2 = QFont("mcprev",pointSize=18);font2.setUnderline(True)
         self.underline.setFont(font2)
         self.underline.triggered.connect(self.onUnderline)
 
@@ -145,7 +149,7 @@ class mainwin(QMainWindow):
         self.strikeline.setText("S")
         self.strikeline.setToolTip("Strikeline")
         self.strikeline.setCheckable(True)
-        font3 = QFont("minecraft",pointSize=18);font3.setStrikeOut(True)
+        font3 = QFont("mcprev",pointSize=18);font3.setStrikeOut(True)
         self.strikeline.setFont(font3)
         self.strikeline.triggered.connect(self.onStrikeline)
 
@@ -156,7 +160,7 @@ class mainwin(QMainWindow):
 
         #color
         self.textcolor = QWidgetAction(self.toolbar)
-        font4 = QFont("Minecraft",pointSize=18)
+        font4 = QFont("mcprev",pointSize=18)
 
         self.colorbutton = QToolButton(self)
         self.colorbutton.setText("C")
@@ -215,7 +219,40 @@ class mainwin(QMainWindow):
         newsign.setData('sign')
         newsign.triggered.connect(self.onNewTab)
 
+        newtext = QAction(self)
+        newtext.setText('Text display editor')
+        newtext.setData('text')
+        newtext.triggered.connect(self.onNewTab)
+
         menu.addAction(newsign)
+        menu.addAction(newtext)
+
+    def onTabChange(self):
+        tab = self.tabs.currentWidget()
+        self.app.setCurrentPanel(tab)
+
+    def onNewTab(self):
+        sender = self.sender()
+        tab_type = sender.data()  # should be string
+
+        if tab_type == 'sign':
+            panel = SignEditPanel(parent=self)
+            panel.options = self.options
+            panel.sign.options = self.options
+
+            self.addEditorPanel(panel)
+        elif tab_type == 'text':
+            panel = TextDisplayPanel(parent=self)
+            panel.options = self.options
+            self.addEditorPanel(panel)
+        else:
+            raise AssertionError('Unknown tab type: ' + tab_type)
+
+    def addEditorPanel(self, panel: EditPanel):
+        for editor in panel.edit_fields:
+            editor.cursorPositionChanged.connect(self.onCursorPosChanged)
+        self.tabs.addTab(panel, panel.name)
+        self.tabs.setCurrentWidget(panel)
 
     def createColorMenu(self, menu: QMenu) -> None:
         global colors, desp
@@ -262,27 +299,6 @@ class mainwin(QMainWindow):
     def currentEditPanel(self) -> EditPanel:
         return self.tabs.currentWidget()
 
-    def addEdiorPanel(self,panel : EditPanel):
-        for editor in panel.edit_fields:
-            editor.cursorPositionChanged.connect(self.onCursorPosChanged)
-        self.tabs.addTab(panel, panel.name)
-
-    def onTabChange(self):
-        tab = self.tabs.currentWidget()
-        self.app.setCurrentPanel(tab)
-
-    def onNewTab(self):
-        sender = self.sender()
-        tab_type = sender.data() #should be string
-
-        if tab_type == 'sign':
-            panel = SignEditPanel(parent=self)
-            panel.options = self.options
-            panel.sign.options = self.options
-
-            self.addEdiorPanel(panel)
-        else:
-            raise AssertionError('Unknown tab type: ' + tab_type)
 
     def onTabClosing(self,index):
         self.tabs.removeTab(index)
