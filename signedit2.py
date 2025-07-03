@@ -79,6 +79,8 @@ class mainwin(QMainWindow):
         self.char_picker_dock = QDockWidget('Character Picker', self)
         self.char_picker_dock.setWidget(self.char_picker)
 
+        self.dialog = PicInsert(self)
+
 
         #add tabs
         self.setCentralWidget(self.tabs)
@@ -323,7 +325,6 @@ class mainwin(QMainWindow):
         self.in_win.show()
 
     def onInsert(self):
-        self.dialog = PicInsert(self,"")
         self.dialog.show()
 
     def onBold(self, ischecked):
