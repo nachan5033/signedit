@@ -1,5 +1,4 @@
 from parse import *
-from editpanel import EditPanel
 from constants import *
 
 from PyQt5.QtWidgets import QTextEdit, QTextBrowser, QWidget,QPlainTextEdit,QStyle
@@ -23,9 +22,6 @@ class Document:
     name: str
     type: str
     options: Options
-
-    view_editor: EditPanel
-    result_display: QPlainTextEdit
 
 
 class Sign(Document):
@@ -79,9 +75,20 @@ class Sign(Document):
     def loadFromJsonText(self, json_txt: str):
         json_obj = json.loads(json_txt)
         try:
-            pass
+            front= json_obj['front_text']
+            back = json_obj['back_text']
+
+            self.name = json_obj['name']
+            self.type = json_obj['type']
+
+            self.front_HTML,self.front_commands = loadFromTree(front,alignment = 'center')
+            self.back_HTML, self.back_commands = loadFromTree(back,alignment = 'center')
+
+            self.both_commands = []
+            self.both_HTML = ''
+            self.face_mode = Facemodes.FRONT
         except:
-            pass
+            raise ValueError('Wrong JSON format')
 
     def getJsonTree(self, face: Facemodes):
         self.parser.set_options(self.options)
@@ -123,5 +130,3 @@ class Sign(Document):
 
     def getCommand121(self, face: Facemodes):
         return 'Not implemented'
-
-

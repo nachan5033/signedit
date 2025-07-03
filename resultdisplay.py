@@ -30,6 +30,7 @@ class ResultDisplay(QWidget):
         self.version_combo = QComboBox()
 
         self.copy_button.clicked.connect(self.onCopyClicked)
+        self.load_button.clicked.connect(self.onLoadButtonClicked)
 
 
         # load supported versions
@@ -60,9 +61,18 @@ class ResultDisplay(QWidget):
         return self.result_panel
 
     def registerUpdateFunc(self,version : str,func : Callable):
+        """
+        Register update function to update command
+        update function: update() -> str
+        """
         self.updateFuncDict[version] = func
 
     def registerLoadFunc(self,version : str,func : Callable):
+        """
+        Register load function to specific version
+
+        load function: load(command : str) -> None
+        """
         self.loadFuncDict[version] = func
 
     def onVersionChaneged(self,index):
@@ -84,4 +94,7 @@ class ResultDisplay(QWidget):
         self.copy_button.setText("Copied!")
 
     def onLoadButtonClicked(self):
-        self.loadFuncDict[self.version()](self.result_panel.toPlainText())
+        if self.version() in self.loadFuncDict.keys():
+            self.loadFuncDict[self.version()](self.result_panel.toPlainText())
+        else:
+            print('Load command from specific version is not supported')

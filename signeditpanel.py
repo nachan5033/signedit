@@ -85,10 +85,14 @@ class SignEditPanel(EditPanel):
 
         # ----result output----
         self.resultdisplay = ResultDisplay()
+
+        #-----result funcs-----
         self.resultdisplay.registerUpdateFunc('1.20',self.text_panel.getCommand120)
         self.resultdisplay.registerUpdateFunc('1.21',self.text_panel.getCommand121)
         self.resultdisplay.registerUpdateFunc('Raw',self.text_panel.getJsonText)
         self.resultdisplay.registerUpdateFunc('HTML',self.text_panel.toHtml)
+
+        self.resultdisplay.registerLoadFunc('Raw',self.loadFromJson)
 
         # create UI
         grid.addWidget(self.text_panel, 1, 1, 2, 4)
@@ -158,6 +162,31 @@ class SignEditPanel(EditPanel):
         if len(commands) >= 1:
             self.text_panel.setCommandsForCurrentFace(commands)
         self.updateCommand()
+
+    def updateFromDoc(self):
+        #update background
+        global point_size
+        signtype = self.sign.type
+        signtype = signtype.replace('_hanging_sign','')
+        signtype = signtype.replace('_sign','')
+        filename = "./src/%s.png" % signtype
+        sheet = """QTextEdit { background-color: lightgray;
+                                                       font-size: %dpx; 
+                                                      font-family: 'mcprev','unimc';
+                                                      padding: 0;
+                                                      margin-bottom: 0px;
+                                                      background: url("%s") repeat top center;
+                                                      }""" % (point_size, filename)
+        self.text_panel.setStyleSheet(sheet)
+
+        #update text
+        self.front_switch.setChecked(True)
+        self.text_panel.setHtml(self.sign.front_HTML)
+        self.command_panel.setPlainText(commandList2Str(self.sign.front_commands))
+
+    def loadFromJson(self,json_text : str):
+        self.sign.loadFromJsonText(json_text)
+        self.updateFromDoc()
 
 
 
