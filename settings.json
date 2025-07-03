@@ -13,5 +13,8 @@
     "./src/unimc.otf",
     "./src/unimc-bold.otf"
   ],
-  "default_version" : "1.20"
+  "default_version" : "1.20",
+  "max_pic_height":256,
+  "max_pic_width":256,
+  "default_pic_path":"./18.png"
 }

@@ -19,7 +19,7 @@ class SignApp(QApplication):
     def setCurrentPanel(self, editor: EditPanel):
         self.current_panel = editor
 
-    def options(self):
+    def getOptions(self):
         return self.options
 
     def setOptions(self, options):

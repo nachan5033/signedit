@@ -56,4 +56,9 @@ class Options:
             #load default version
             self.default_version = opt['default_version']
 
+            #load picture info
+            self.max_pic_height = opt["max_pic_height"]
+            self.max_pic_width  = opt["max_pic_width"]
+            self.default_pic_path = opt["default_pic_path"]
+
 global_options = Options()
