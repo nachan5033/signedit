@@ -66,4 +66,13 @@ class Options:
             self.max_pic_width  = opt["max_pic_width"]
             self.default_pic_path = opt["default_pic_path"]
 
-global_options = Options()
+global_options = None
+
+def getGlobalOptions():
+    global global_options
+    return global_options
+
+def loadOptions():
+    global global_options
+    global_options = Options(load_fonts=True)
+    global_options.loadoptions()

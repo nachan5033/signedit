@@ -45,6 +45,10 @@ class TextDisplayPanel(EditPanel):
         self.doc = TextDisplayDoc()
         self.doc.type = 'oak_sign'
 
+        #load options
+        self.options = parent.options
+        self.doc.options = self.options
+
         self.text_panel = TextDisplayEdit(self)
         self.edit_fields.append(self.text_panel)
 

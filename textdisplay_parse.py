@@ -61,6 +61,7 @@ class TextDisplayDoc(Document):
 
         self.name = 'text display'
         self.type = 'oak_sign'
+        self.options = Options()
 
         self.parser = MyHTMLParser()
 
@@ -124,7 +125,7 @@ class TextDisplayDoc(Document):
         sign.name = self.name
         sign.type = self.type
 
-        sign.options = Options()
+        sign.options = self.options
 
         type = sign.type.replace('_hanging_sign','')
         type = type.replace('_sign','')
@@ -136,16 +137,22 @@ class TextDisplayDoc(Document):
             protect_str = ' unless entity @e[type=text_display,distance=..0.2]'
 
         #tips
-        tip_htm = '<p>Click to put text</p><p>Place on walls</p>'
-        brightness_tip = '<p>Ambient light<p>'
-
+        tip_htm = '<p>Place it on walls</p><p>Click to put text</p>'
+        brightness_tip = '<p>Ambient light</p>'
         if self.glow:
-            brightness_tip = '<p>Light s:%d b:%d <p>'%self.brightness
+            brightness_tip = '<p>Light s:%d b:%d </p>'%self.brightness
 
         #generate JsonText
         self.parser.parse(self.html)
         tree = self.parser.tree
         text_str = treeToJsonText120(tree)
+
+        preview_html = ''
+        #preview
+        if len(tree) > 0:
+            preview_html,cmd = loadFromTree([tree[0]])
+
+        sign.front_HTML = tip_htm + brightness_tip + preview_html
 
 
         #calibrate
@@ -207,7 +214,7 @@ class TextDisplayDoc(Document):
         sign.name = self.name
         sign.type = self.type
 
-        sign.options = Options()
+        sign.options = self.options
 
         type = sign.type.replace('_hanging_sign', '')
         type = type.replace('_sign', '')
@@ -218,10 +225,23 @@ class TextDisplayDoc(Document):
         if protect_mode:
             protect_str = ' unless entity @e[type=text_display,distance=..0.2]'
 
+        # tips
+        tip_htm = '<p>Place on ground</p><p>Click to put text</p>'
+        brightness_tip = '<p>Ambient light</p>'
+        if self.glow:
+            brightness_tip = '<p>Light s:%d b:%d </p>' % self.brightness
+
         # generate JsonText
         self.parser.parse(self.html)
         tree = self.parser.tree
         text_str = treeToJsonText120(tree)
+
+        preview_html = ''
+        # preview
+        if len(tree) > 0:
+            preview_html,cmd = loadFromTree([tree[0]])
+
+        sign.front_HTML = tip_htm + brightness_tip + preview_html
 
         # calibrate
         if y_cali:
@@ -234,7 +254,6 @@ class TextDisplayDoc(Document):
             height *= self.scale[1]
             y_offset = (-height / 2) / 40
 
-            print(y_offset)
 
         self.parser.clearHTML()
         cali_str = '~'
@@ -277,16 +296,3 @@ class TextDisplayDoc(Document):
 
 
         return sign.getCommand120(Facemodes.FRONT)
-
-if __name__ == '__main__':
-
-    doc = TextDisplayDoc()
-    doc.align = 'left'
-    doc.scale = (1,1)
-    doc.html = '''<p align="center" style=" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;"><span style=" color:#ff5500;">Colorful</span> <span style=" color:#9ac0cd;">Motto</span></p>
-<p align="center" style=" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;"><span style=" font-weight:600; color:#0000ff;">Colorful</span><span style=" font-weight:600;"> Motto</span></p>
-<p align="center" style=" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;"><span style=" color:#00ffff;">𝑪𝒐𝒍𝒐𝒓𝒇𝒖𝒍</span> <span style=" color:#a020f0;">𝑴𝒐𝒕𝒕𝒐</span></p></body></html>'''
-    doc.glow = False
-
-    t = doc.genWallSign(y_cali = True)
-    print(t)

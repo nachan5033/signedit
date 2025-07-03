@@ -3,7 +3,7 @@ from html.parser import HTMLParser
 from json import JSONEncoder
 
 from constants import Signtypes
-from options import Options
+from options import *
 
 def trim_command(command : str) -> str:
     '''
@@ -51,8 +51,8 @@ def loadFromTree(tree : list,alignment='center') -> tuple[str, list[str]]:
                     line_temp += element['text']
             else:
                 style_base = ''
-                if is_bold: style_base += 'font-weight: 600;'
-                if is_italic: style_base += 'font-style: italic;'
+                if is_bold: style_base += 'font-weight:600;'
+                if is_italic: style_base += 'font-style:italic;'
                 #text-decoration
                 if is_underline: style_base += 'text-decoration: underline'
                 if is_strike and not is_underline: style_base += 'text-decoration: line-through'
@@ -60,12 +60,11 @@ def loadFromTree(tree : list,alignment='center') -> tuple[str, list[str]]:
                 if is_underline or is_strike: style_base += ';'
                 #color
                 if is_color:
-                    style_base += 'color: %s;'%element['color']
+                    style_base += 'color:%s;'%element['color']
                 if is_font:
-                    opt = Options()
-                    opt.loadoptions()
+                    opt = getGlobalOptions()
                     font_families = opt.fontlist[element['font']]
-                    style_base += 'font-family: %s;'%font_families
+                    style_base += 'font-family: %s;'%families_str(font_families)
                 line_temp += span_temp % (style_base,element['text'])
         htm += p_temp % (alignment,line_temp)
     return htm, cmd_list
@@ -106,6 +105,11 @@ class MyHTMLParser(HTMLParser):
         self.commands = []
         
         self.in_content = False
+
+        self.options = getGlobalOptions()
+        #print(self.options.reverse_fontlist)
+
+
 
     def trim_tree(self):
         '''
@@ -185,7 +189,10 @@ class MyHTMLParser(HTMLParser):
                     font = value[pos:pos_end]
 
                     font = font.strip()
-                    self.current_font = self.options.reverse_fontlist[font]
+                    if font in self.options.reverse_fontlist.keys():
+                        self.current_font = self.options.reverse_fontlist[font]
+                    else:
+                        self.current_font = '' #default font
                     
     def handle_endtag(self, tag):
         self.reset_attr() #reset attributes after finishing processing the tag

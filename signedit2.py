@@ -47,12 +47,10 @@ class mainwin(QMainWindow):
     def __init__(self, app):
         super().__init__()
         self.app = app
-        self.options = Options(load_fonts=True)
-        self.options.loadoptions()
+        self.options = getGlobalOptions()
         self.app.setOptions(self.options)
 
-        global global_options
-        global_options = self.options
+
 
         self.tabs = QTabWidget()
         self.tabs.setTabsClosable(True)
@@ -543,6 +541,9 @@ def main():
     print('Loading char list...')
     loadChars()
     app = SignApp(sys.argv)
+
+    loadOptions()
+
     win = mainwin(app)
     win.show()
     sys.exit(app.exec_())

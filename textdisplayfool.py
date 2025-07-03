@@ -79,7 +79,7 @@ class FoolTextDisplayPanel(TextDisplayPanel):
         self.onCommandModeChange()
 
     def updateCommand(self):
-        pass
+        self.result.updateCommand()
 
     def onVersionChaneged(self,index):
         pass

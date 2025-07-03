@@ -34,7 +34,8 @@ class ResultDisplay(QWidget):
 
 
         # load supported versions
-        global supported_versions, global_options
+        global supported_versions
+        global_options = getGlobalOptions()
         for i in supported_versions:
             self.version_combo.addItem(i)
 
@@ -79,6 +80,7 @@ class ResultDisplay(QWidget):
         self.updateCommand()
 
     def updateCommand(self):
+        self.resetCopyButton()
         version = self.version()
         if version in self.updateFuncDict.keys():
             s = self.updateFuncDict[version]()
