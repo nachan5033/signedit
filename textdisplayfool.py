@@ -33,19 +33,24 @@ class FoolTextDisplayPanel(TextDisplayPanel):
 
         self.scaler = QDoubleSpinBox()
         self.scaler.setSingleStep(0.1)
-        self.scaler.setValue(2.0)
+        self.scaler.setValue(1.0)
         self.scaler.setSuffix("x")
         self.scaler.valueChanged.connect(self.onScaleChange)
 
         self.normal_offset = QDoubleSpinBox()
         self.normal_offset.setSingleStep(0.1)
         self.normal_offset.setValue(0)
+        self.normal_offset.setMinimum(-100)
+        self.normal_offset.valueChanged.connect(self.result.updateCommand)
+
         self.offset_label = QLabel("Normal offset")
         self.offset_label.setToolTip("0.0: Block\n0.0: Glass pane\n0.0: Sign")
 
         self.y_offset = QDoubleSpinBox()
         self.y_offset.setSingleStep(0.1)
         self.y_offset.setValue(0)
+        self.y_offset.setMinimum(-100)
+        self.y_offset.valueChanged.connect(self.result.updateCommand)
 
         self.auto_offsetting = QCheckBox()
         self.auto_offsetting.setChecked(True)
@@ -92,6 +97,7 @@ class FoolTextDisplayPanel(TextDisplayPanel):
     
     def onScaleChange(self, e):
         self.doc.scale = (self.scaler.value(), self.scaler.value())
+        self.result.updateCommand()
 
     def onCommandModeChange(self):
         if self.mode_summon.isChecked():
