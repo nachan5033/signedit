@@ -30,7 +30,7 @@ def loadFromTree(tree : list,alignment='center') -> tuple[str, list[str]]:
     :return html, list of commands
     """
     htm = ''
-    p_temp = '<p align="center" style=" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;">%s</p>'
+    p_temp = '<p align="%s" style=" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;">%s</p>'
     span_temp = '<span style="%s">%s</span>'
     cmd_list = []
     for line in tree:
@@ -66,8 +66,8 @@ def loadFromTree(tree : list,alignment='center') -> tuple[str, list[str]]:
                     opt.loadoptions()
                     font_families = opt.fontlist[element['font']]
                     style_base += 'font-family: %s;'%font_families
-                line_temp += span_temp % (style_base)
-        htm += p_temp % line_temp
+                line_temp += span_temp % (style_base,element['text'])
+        htm += p_temp % (alignment,line_temp)
     return htm, cmd_list
 
 
