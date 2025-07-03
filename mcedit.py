@@ -206,7 +206,7 @@ class MCEdit(QTextEdit):
     
             doc = QTextEdit()
             doc.setHtml(html)
-            
+
             cursor = doc.textCursor()
             cursor.select(QtGui.QTextCursor.Document)
             char_format = QTextCharFormat()
@@ -236,6 +236,14 @@ class MCEdit(QTextEdit):
             self.insert_panel.show()
         else:
             return super().insertFromMimeData(source)
+    
+    def trySetSTyleSheet(self, sheet : str):
+        """
+        :param sheet: style sheet of CSS format
+
+        try to set the style of the text panel, may be ignored by the children class
+        """
+        self.setStyleSheet(sheet)
 
 class SignEdit(MCEdit):
     face_mode : Facemodes

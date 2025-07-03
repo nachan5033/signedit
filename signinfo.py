@@ -61,7 +61,7 @@ class SignInfoEditor(QWidget):
                                               margin-bottom: 0px;
                                               background: url("%s") repeat top center;
                                               }""" % (point_size, filename)
-        self.app.currentEditPanel().currentEditor().setStyleSheet(sheet)
+        self.app.currentEditPanel().currentEditor().trySetSTyleSheet(sheet)
         self.app.currentEditPanel().updateCommand()
 
     def updateSignInfo(self):
