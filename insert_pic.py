@@ -141,14 +141,13 @@ class PicInsert(QWidget):
     
     def onLoadClick(self, e):
         path = self.file_path.text()
-        print(path)
         img = openImage(path)
-        self.html = analyzeImage(img)
         
         if img is None: #image not found
             self.info_label.setText("Image not found.")
             return
         
+        self.html = analyzeImage(img)
         self.info_label.setText("")
         width = img.size[0]
         height = img.size[1]

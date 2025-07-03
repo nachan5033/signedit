@@ -47,7 +47,7 @@ class mainwin(QMainWindow):
     def __init__(self, app):
         super().__init__()
         self.app = app
-        self.options = Options()
+        self.options = Options(load_fonts=True)
         self.options.loadoptions()
         self.app.setOptions(self.options)
 

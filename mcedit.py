@@ -10,6 +10,7 @@ from PyQt5.QtCore import QMimeData,Qt,QUrl
 from PyQt5.QtGui import QTextCharFormat,QTextBlockFormat, QFont, QColor
 from PyQt5 import QtGui
 from options import Options
+from sign import *
 
 import json
 
@@ -23,10 +24,6 @@ class MCEdit(QTextEdit):
 
 class Document:
     pass
-
-class Sign(Document):
-    pass
-
 
 class MCEdit(QTextEdit):
     font : Fonts
@@ -105,7 +102,6 @@ class MCEdit(QTextEdit):
         if source.hasHtml():
             html = source.html()
             html = self._removeFontSizeData(html)
-    
             doc = QTextEdit()
             doc.setHtml(html)
 
@@ -125,9 +121,11 @@ class MCEdit(QTextEdit):
             cursor.mergeCharFormat(char_format)
 
             font = QFont()
+            font.setFamily('mcprev')
             font.setPixelSize(point_size)
             doc.setFont(font)
             
+            print(doc.toHtml())
             newdata.setHtml(doc.toHtml())
             return super().insertFromMimeData(newdata)
         elif source.hasUrls():

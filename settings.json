@@ -4,6 +4,10 @@
     {
       "name" : "test",
       "family" : "Comic Sans MS,宋体"
+    },
+    {
+      "name":"test2",
+      "family":"Courier New"
     }
   ],
   "extra_fonts":
