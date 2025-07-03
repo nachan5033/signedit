@@ -88,7 +88,7 @@ class TextDisplayDoc(Document):
             R, G, B, A = self.background
             background = (A << 24) + (R << 16) + (G << 8) + B
             if background > 0x80000000:
-                background = background - 0xffffffff
+                background = background - 0xffffffff - 1
         if self.shadow:
             shadow_str = 'true'
         else:
