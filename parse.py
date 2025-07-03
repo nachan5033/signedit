@@ -11,7 +11,7 @@ def trim_command(command : str) -> str:
     Trim the command string so it will fit in command
     '''
     command = command.replace("'","\\'") # ' -> \'
-    command = command.replace('"','\\"') # " -> \\"
+    command = command.replace('"','\\\\"') # " -> \\"
     #command = command.replace('\\','\\\\"') #\ -> \\
     return command
 
