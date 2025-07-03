@@ -121,13 +121,17 @@ class MCEdit(QTextEdit):
             cursor.mergeCharFormat(char_format)
 
             font = QFont()
-            font.setFamily('mcprev')
+            font.setFamily('')
+            font.setFamilies(['mcprev','unimc'])
             font.setPixelSize(point_size)
             doc.setFont(font)
             
             print(doc.toHtml())
+            newdata.clear()
             newdata.setHtml(doc.toHtml())
-            return super().insertFromMimeData(newdata)
+            #self.insertHtml(doc.toHtml())
+            #self.setText(doc.toHtml())
+            super().insertFromMimeData(newdata)
         elif source.hasUrls():
             path :str = source.urls()[0].toString()
             if path.startswith("file://"):
@@ -201,6 +205,47 @@ class SignEdit(MCEdit):
 
         self.setStyleSheet(sheet)
         self.setAlignment(Qt.AlignCenter)
+
+    def insertFromMimeData(self, source: QMimeData | None) -> None:
+        global point_size
+        newdata = QMimeData()
+        if source.hasHtml():
+            html = source.html()
+            html = self._removeFontSizeData(html)
+            doc = QTextEdit()
+            doc.setHtml(html)
+
+            cursor = doc.textCursor()
+            cursor.select(QtGui.QTextCursor.Document)
+            char_format = QTextCharFormat()
+            block_format = cursor.blockFormat()
+
+            block_format.clearBackground()
+            block_format.setAlignment(Qt.AlignCenter)
+
+            char_format.setFontFamilies(['mcprev', 'unimc'])
+            char_format.setBackground(block_format.background())
+
+            cursor.setBlockFormat(block_format)
+            cursor.mergeCharFormat(char_format)
+
+            font = QFont()
+            font.setFamilies(['mcprev','unimc'])
+            font.setPixelSize(point_size)
+            doc.setFont(font)
+            
+            newdata.clear()
+            newdata.setHtml(doc.toHtml())
+            self.syncStyle()
+            super().insertFromMimeData(newdata)
+        elif source.hasUrls():
+            path :str = source.urls()[0].toString()
+            if path.startswith("file://"):
+                path = path[7:]
+            self.insert_panel = PicInsert(self.parent().parent(),path)
+            self.insert_panel.show()
+        else:
+            return super().insertFromMimeData(source)
     
     def setHtml(self, text):
         if text == '': #no html, just clear the page

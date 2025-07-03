@@ -124,7 +124,7 @@ class mainwin(QMainWindow):
         self.bold.setToolTip("Bold")
         self.bold.setCheckable(True)
 
-        font1 = QFont("mcprev", pointSize=18);
+        font1 = QFont("mcprev", pointSize=18)
         font1.setBold(True)
         self.bold.setFont(font1)
         self.bold.triggered.connect(self.onBold)
