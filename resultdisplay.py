@@ -4,6 +4,7 @@ import platform
 from typing import Callable
 
 from mcedit import *
+from sign import *
 
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import Qt
@@ -21,6 +22,7 @@ class ResultDisplay(QWidget):
     def __init__(self):
         super().__init__()
         self.updateFuncDict = {}
+        self.loadFuncDict = {}
 
         self.result_panel = QPlainTextEdit()
         self.copy_button = QPushButton("Click to Copy")
@@ -60,6 +62,9 @@ class ResultDisplay(QWidget):
     def registerUpdateFunc(self,version : str,func : Callable):
         self.updateFuncDict[version] = func
 
+    def registerLoadFunc(self,version : str,func : Callable):
+        self.loadFuncDict[version] = func
+
     def onVersionChaneged(self,index):
         self.updateCommand()
 
@@ -77,3 +82,6 @@ class ResultDisplay(QWidget):
         clipboard.setText(self.result_panel.toPlainText())
         self.result_panel.selectAll()
         self.copy_button.setText("Copied!")
+
+    def onLoadButtonClicked(self):
+        self.loadFuncDict[self.version()](self.result_panel.toPlainText())

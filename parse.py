@@ -5,7 +5,6 @@ from json import JSONEncoder
 from constants import Signtypes
 from options import Options
 
-
 def trim_command(command : str) -> str:
     '''
     Trim the command string so it will fit in command
@@ -24,6 +23,53 @@ def trim_text(text : str) -> str:
     text = text.replace('"','\\\\"')# " -> \\"
 
     return text
+
+def loadFromTree(tree : list,alignment='center') -> tuple[str, list[str]]:
+    """
+    Load html from text tree
+    :return html, list of commands
+    """
+    htm = ''
+    p_temp = '<p align="center" style=" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;">%s</p>'
+    span_temp = '<span style="%s">%s</span>'
+    cmd_list = []
+    for line in tree:
+        line_temp = ''
+        for element in line:
+            is_bold = hasProperty(element, 'bold')
+            is_italic = hasProperty(element, 'italic')
+            is_underline = hasProperty(element, 'underline')
+            is_strike = hasProperty(element, 'strikethrough')
+            is_color = hasProperty(element, 'color')
+            is_command = hasProperty(element, 'command')
+            is_font = hasProperty(element, 'font')
+            if is_command:
+                cmd_list.append(element['command'])
+            if not (is_bold or is_italic or is_underline or is_strike or is_color or is_font):
+                # no property at all
+                if 'text' in element.keys():
+                    line_temp += element['text']
+            else:
+                style_base = ''
+                if is_bold: style_base += 'font-weight: 600;'
+                if is_italic: style_base += 'font-style: italic;'
+                #text-decoration
+                if is_underline: style_base += 'text-decoration: underline'
+                if is_strike and not is_underline: style_base += 'text-decoration: line-through'
+                if is_strike and is_underline: style_base += 'line-through'
+                if is_underline or is_strike: style_base += ';'
+                #color
+                if is_color:
+                    style_base += 'color: %s;'%element['color']
+                if is_font:
+                    opt = Options()
+                    opt.loadoptions()
+                    font_families = opt.fontlist[element['font']]
+                    style_base += 'font-family: %s;'%font_families
+                line_temp += span_temp % (style_base)
+        htm += p_temp % line_temp
+    return htm, cmd_list
+
 
 class MyHTMLParser(HTMLParser):
     tree : list #lines of a single face

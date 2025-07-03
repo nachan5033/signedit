@@ -21,7 +21,7 @@ def toMCCoord(n : tuple[float,float,float], offset : tuple[float,float,float],
     :param origin_offset: origin vector of the origin to command origin (in mc coordinates)
     :param origin: origin of the entity in the world (set it None to use relative coordinates)
 
-    :return string of the position of the entity, rotation y, rotation z
+    :return string of the position of the entity, rotation y, pitch
     """
     n = np.array(n)
     offset = np.array(offset)
@@ -29,6 +29,12 @@ def toMCCoord(n : tuple[float,float,float], offset : tuple[float,float,float],
 
     n = n / np.linalg.norm(n)
 
+    #rotation y: rotation angle around Y (clockwise from above)
+    #pitch: rotation angle around XZ face (clockwise when looking at X direction)
+    #default normal vector is (0,0,1)
+
+    yr = np.arcsin(-n[0] / np.sqrt(1-n[1]**2))
+    xr = np.arcsin(n[1])
 
 
 
@@ -101,13 +107,15 @@ class TextDisplayDoc(Document):
         return self.genSummonCommand120_caching(text_str)
 
 
-    def genWallSign(self,html : str, offset = 0.01,y_offset = 0.0,y_cali = False):
+    def genWallSign(self, offset = 0.01,y_offset = 0.0,y_cali = False,
+                    protect_mode = True):
         """
         Generate give command of a wall mode sign
         :param html: HTML content of text display entity
         :param offset: depth offset of the text to the block
         :param y_offset: vertical offset of the text to the block
         :param y_cali: whether to calibrate the vertical offset (default font only)
+        :param protect_mode: whether to prevent the sign from creating multiple entities
         """
 
         sign = Sign()
@@ -120,6 +128,17 @@ class TextDisplayDoc(Document):
         type = type.replace('_sign','')
 
         type += '_wall_sign'
+
+        protect_str = ''
+        if protect_mode:
+            protect_str = ' unless entity @e[type=text_display,distance=..0.2]'
+
+        #tips
+        tip_htm = '<p>Click to put text</p><p>Place on walls</p>'
+        brightness_tip = '<p>Ambient light<p>'
+
+        if self.glow:
+            brightness_tip = '<p>Light s:%d b:%d <p>'%self.brightness
 
         #generate JsonText
         self.parser.parse(self.html)
@@ -143,39 +162,41 @@ class TextDisplayDoc(Document):
         if not fequ(y_offset,0):
             y_str = '~%2.2f' % y_offset
 
+        self.position = '~ ~ ~'
         #facing north
         z_off = 0.5 - offset
-        self.position = '~ %s ~%2.2f'%(y_str,z_off)
+        pos = '~ %s ~%2.2f'%(y_str,z_off)
         self.rotation = (180,0)
         cmd_north = self.genSummonCommand120_caching(text_str)
-        cmd_north = f'execute if block ~ ~ ~ {type}[facing=north] run {cmd_north}'
+        cmd_north = f'execute if block ~ ~ ~ {type}[facing=north] positioned {pos}{protect_str} run {cmd_north}'
 
         #facing south
         z_off = -0.5 + offset
-        self.position = '~ %s ~%2.2f'%(y_str,z_off)
+        pos = '~ %s ~%2.2f'%(y_str,z_off)
         self.rotation = (0,0)
         cmd_south = self.genSummonCommand120_caching(text_str)
-        cmd_south = f'execute if block ~ ~ ~ {type}[facing=south] run {cmd_south}'
+        cmd_south = f'execute if block ~ ~ ~ {type}[facing=south] positioned {pos}{protect_str} run {cmd_south}'
 
         #facing east
         x_off = -0.5 + offset
-        self.position = '~%2.2f %s ~'%(x_off, y_str)
+        pos = '~%2.2f %s ~'%(x_off, y_str)
         self.rotation = (270,0)
         cmd_east = self.genSummonCommand120_caching(text_str)
-        cmd_east = f'execute if block ~ ~ ~ {type}[facing=east] run {cmd_east}'
+        cmd_east = f'execute if block ~ ~ ~ {type}[facing=east] positioned {pos}{protect_str} run {cmd_east}'
 
         #facing west
         x_off = 0.5 - offset
-        self.position = '~%2.2f %s ~'%(x_off,y_str)
+        pos = '~%2.2f %s ~'%(x_off,y_str)
         self.rotation = (90,0)
         cmd_west = self.genSummonCommand120_caching(text_str)
-        cmd_west = f'execute if block ~ ~ ~ {type}[facing=west] run {cmd_west}'
+        cmd_west = f'execute if block ~ ~ ~ {type}[facing=west] positioned {pos}{protect_str} run {cmd_west}'
 
         sign.front_commands = [cmd_north, cmd_south, cmd_east, cmd_west]
 
         return sign.getCommand120(Facemodes.FRONT)
 
-    def genGroundSign(self,html : str, offset = 0.01):
+    def genGroundSign(self, offset = 0.01,y_offset = 0.0,y_cali = False,
+                      protect_mode = True):
         '''
         Generate give command of a ground mode sign
         '''
@@ -191,30 +212,64 @@ class TextDisplayDoc(Document):
 
         type += '_sign'
 
-        # pointing to north
+        protect_str = ''
+        if protect_mode:
+            protect_str = ' unless entity @e[type=text_display,distance=..0.2]'
+
+        # generate JsonText
+        self.parser.parse(self.html)
+        tree = self.parser.tree
+        text_str = treeToJsonText120(tree)
+
+        # calibrate
+        if y_cali:
+            # calibrate method:
+            # height of a character is 8px (default font)
+            # spacing between lines is 2px (default font, equals to 4px in unifont)
+            # about 40px / block (scale = 1)
+            num_lines = len(tree)
+            height = num_lines * 10
+            height *= self.scale[1]
+            y_offset = (-height / 2) / 40
+
+            print(y_offset)
+
+        self.parser.clearHTML()
+        cali_str = '~'
         y_off = -0.5 + offset
-        self.position = '~ ~%2.2f ~' % y_off
+        self.position = '~ ~ ~'
+        # pointing to north
+        if not fequ(y_offset, 0):
+            cali_str = '~%2.2f' % -y_offset
+
+        pos = '~ ~%2.2f %s' % (y_off,cali_str)
         self.rotation = (0, 270)
-        cmd_north = self.genSummonCommand120()
-        cmd_north = f'execute if block ~ ~ ~ {type}[rotation=0] run {cmd_north}'
+        cmd_north = self.genSummonCommand120_caching(text_str)
+        cmd_north = f'execute if block ~ ~ ~ {type}[rotation=0] positioned {pos}{protect_str} run {cmd_north}'
 
-        # facing south
-        self.position = '~ ~%2.2f ~' % y_off
+        # pointing to south
+        if not fequ(y_offset, 0):
+            cali_str = '~%2.2f' % y_offset
+        pos = '~ ~%2.2f %s' % (y_off,cali_str)
         self.rotation = (180, 270)
-        cmd_south = self.genSummonCommand120()
-        cmd_south = f'execute if block ~ ~ ~ {type}[rotation=8] run {cmd_south}'
+        cmd_south = self.genSummonCommand120_caching(text_str)
+        cmd_south = f'execute if block ~ ~ ~ {type}[rotation=8] positioned {pos}{protect_str} run {cmd_south}'
 
-        # facing east
-        self.position = '~ ~%2.2f ~' % y_off
+        # pointing to east
+        if not fequ(y_offset, 0):
+            cali_str = '~%2.2f' % y_offset
+        pos = '%s ~%2.2f ~' % (cali_str,y_off)
         self.rotation = (90, 270)
-        cmd_east = self.genSummonCommand120()
-        cmd_east = f'execute if block ~ ~ ~ {type}[rotation=4] run {cmd_east}'
+        cmd_east = self.genSummonCommand120_caching(text_str)
+        cmd_east = f'execute if block ~ ~ ~ {type}[rotation=4] positioned {pos}{protect_str} run {cmd_east}'
 
-        # facing west
-        self.position = '~ ~%2.2f ~' % y_off
+        # pointing to west
+        if not fequ(y_offset, 0):
+            cali_str = '~%2.2f' % -y_offset
+        pos = '%s ~%2.2f ~' % (cali_str,y_off)
         self.rotation = (270, 270)
-        cmd_west = self.genSummonCommand120()
-        cmd_west = f'execute if block ~ ~ ~ {type}[rotation=12] run {cmd_west}'
+        cmd_west = self.genSummonCommand120_caching(text_str)
+        cmd_west = f'execute if block ~ ~ ~ {type}[rotation=12] positioned {pos}{protect_str} run {cmd_west}'
 
         sign.front_commands = [cmd_north, cmd_south, cmd_east, cmd_west]
 
@@ -222,11 +277,14 @@ class TextDisplayDoc(Document):
         return sign.getCommand120(Facemodes.FRONT)
 
 if __name__ == '__main__':
+
     doc = TextDisplayDoc()
     doc.align = 'left'
-    doc.scale = (0.5,0.5)
-    doc.html = '<p>字字██</p><p>字字██</p><p>字字██</p><p>字字██</p>'
+    doc.scale = (1,1)
+    doc.html = '''<p align="center" style=" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;"><span style=" color:#ff5500;">Colorful</span> <span style=" color:#9ac0cd;">Motto</span></p>
+<p align="center" style=" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;"><span style=" font-weight:600; color:#0000ff;">Colorful</span><span style=" font-weight:600;"> Motto</span></p>
+<p align="center" style=" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;"><span style=" color:#00ffff;">𝑪𝒐𝒍𝒐𝒓𝒇𝒖𝒍</span> <span style=" color:#a020f0;">𝑴𝒐𝒕𝒕𝒐</span></p></body></html>'''
     doc.glow = False
 
-    t = doc.genWallSign('test',y_cali = True)
+    t = doc.genWallSign(y_cali = True)
     print(t)

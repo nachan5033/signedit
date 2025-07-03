@@ -12,6 +12,7 @@ from options import *
 from constants import *
 from editpanel import *
 from resultdisplay import *
+from sign import *
 
 class SignEditPanel(EditPanel):
     text_panel: SignEdit
@@ -157,5 +158,7 @@ class SignEditPanel(EditPanel):
         if len(commands) >= 1:
             self.text_panel.setCommandsForCurrentFace(commands)
         self.updateCommand()
+
+
 
 
