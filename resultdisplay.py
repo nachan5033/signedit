@@ -11,16 +11,15 @@ from PyQt5.QtGui import QKeySequence, QFont, QTextCursor, QColor, QIcon, QTextCh
     QTextDocumentFragment, QTextBlock
 from options import *
 from constants import *
-from signedit2 import *
+#from signedit2 import *
 
 
 class ResultDisplay(QWidget):
 
     updateFuncDict : dict[str,Callable]
 
-    def __init__(self, app: SignApp = None):
+    def __init__(self):
         super().__init__()
-        self.app = app
         self.updateFuncDict = {}
 
         self.result_panel = QPlainTextEdit()

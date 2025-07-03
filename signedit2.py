@@ -5,6 +5,7 @@ from mcedit import MCEdit, SignEdit
 from signeditpanel import *
 from constants import *
 from textdisplay import TextDisplayPanel
+from textdisplayfool import FoolTextDisplayPanel
 from younyao_in import YounyaoIn
 from insert_pic import PicInsert
 
@@ -18,6 +19,7 @@ from app import *
 from signinfo import *
 from charpanel import *
 from editpanel import *
+from colorpicker import ColorPicker
 
 class mainwin(QMainWindow):
     sign_info : SignInfoEditor
@@ -34,7 +36,7 @@ class mainwin(QMainWindow):
     younyao_in  : QAction
     fontcombo : QComboBox
     systemfontcombo : QComboBox #
-    textcolor   : QWidgetAction
+    textcolor   : ColorPicker
     colorbutton : QToolButton
     special_char: QWidget
     insert      : QAction
@@ -159,22 +161,9 @@ class mainwin(QMainWindow):
         self.fontcombo.activated.connect(self.onFontChanged)
 
         #color
-        self.textcolor = QWidgetAction(self.toolbar)
-        font4 = QFont("mcprev",pointSize=18)
-
-        self.colorbutton = QToolButton(self)
-        self.colorbutton.setText("C")
-        self.colorbutton.setFont(font4)
-        self.colorbutton.setStyleSheet("color: green")
-        self.colorbutton.setPopupMode(QToolButton.InstantPopup)
-        self.colorbutton.setAutoRaise(True)
-
-        menu = QMenu(self.colorbutton)
-        self.createColorMenu(menu)
-        self.colorbutton.setMenu(menu)
-
-        self.textcolor.setToolTip("Color")
-        self.textcolor.setDefaultWidget(self.colorbutton)
+        self.textcolor = ColorPicker(None, self.toolbar)
+        self.textcolor.color_dialog_launched = self.onColorDialogLaunch
+        self.textcolor.color_change = self.onColorChange
 
         #system font selector
         self.systemfontcombo = QComboBox()
@@ -194,9 +183,6 @@ class mainwin(QMainWindow):
         self.insert.setFont(font5)
         self.insert.setCheckable(False)
         self.insert.triggered.connect(self.onInsert)
-
-        self.textcolor.setToolTip("Color")
-        self.textcolor.setDefaultWidget(self.colorbutton)
 
         self.toolbar.addAction(self.newtab)
         self.toolbar.addAction(self.bold)
@@ -219,12 +205,18 @@ class mainwin(QMainWindow):
         newsign.setData('sign')
         newsign.triggered.connect(self.onNewTab)
 
+        newtext_fool = QAction(self)
+        newtext_fool.setText('Text display editor (Fool)')
+        newtext_fool.setData('text_fool')
+        newtext_fool.triggered.connect(self.onNewTab)
+
         newtext = QAction(self)
-        newtext.setText('Text display editor')
+        newtext.setText('Text display editor (Expert)')
         newtext.setData('text')
         newtext.triggered.connect(self.onNewTab)
 
         menu.addAction(newsign)
+        menu.addAction(newtext_fool)
         menu.addAction(newtext)
 
     def onTabChange(self):
@@ -243,6 +235,11 @@ class mainwin(QMainWindow):
             self.addEditorPanel(panel)
         elif tab_type == 'text':
             panel = TextDisplayPanel(parent=self)
+            panel.options = self.options
+            self.addEditorPanel(panel)
+        elif tab_type == 'text_fool':
+            panel = FoolTextDisplayPanel(parent=self)
+            panel.initUI()
             panel.options = self.options
             self.addEditorPanel(panel)
         else:
@@ -303,12 +300,14 @@ class mainwin(QMainWindow):
     def onTabClosing(self,index):
         self.tabs.removeTab(index)
 
-    def onColorClick(self):
+    def onColorDialogLaunch(self, ref_color):
+        textpanel = self.currentEditPanel().currentEditor()
+        char_format = textpanel.currentCharFormat()
+        self.textcolor.color = char_format.foreground().color()
+
+    def onColorChange(self, color):
         textpanel = self.currentEditPanel().currentEditor()
         cursor: QTextCursor = textpanel.textCursor()
-        sender = self.sender().sender().parent()
-        style = sender.styleSheet()
-        color = style[18:25]
 
         if not cursor.selection().isEmpty():
             cursor.beginEditBlock()
@@ -318,25 +317,6 @@ class mainwin(QMainWindow):
             cursor.endEditBlock()
         else:
             textpanel.setTextColor(QColor(color))
-
-    def onMoreColorClick(self):
-        textpanel = self.currentEditPanel().currentEditor()
-        cursor: QTextCursor = textpanel.textCursor()
-
-        dlg = QColorDialog(textpanel.textColor(), self)
-        # dlg.show()
-        color = dlg.getColor()
-        dlg.close()
-
-        if not cursor.selection().isEmpty():
-            cursor.beginEditBlock()
-            print(self.hasFocus())
-            textformat = QTextCharFormat()
-            textformat.setForeground(color.toRgb())
-            cursor.mergeCharFormat(textformat)
-            cursor.endEditBlock()
-        else:
-            textpanel.setTextColor(color)
 
     def onYounyaoInPopup(self):
         self.in_win = YounyaoIn(self.app)
