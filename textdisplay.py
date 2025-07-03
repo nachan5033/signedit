@@ -54,6 +54,7 @@ class TextDisplayPanel(EditPanel):
     def initBaseUI(self):
         self.main_layout = QVBoxLayout()
         self.main_layout.addWidget(self.text_panel)
+        self.result = ResultDisplay()
         
         text_tool_layout = QHBoxLayout()
         self.align_left = QRadioButton("Left")
@@ -66,16 +67,18 @@ class TextDisplayPanel(EditPanel):
 
         self.background_select = QCheckBox("Background")
         self.background_select.toggled.connect(self.onBackgroundChecked)
-        self.background_picker = ColorPicker(None, self, "█", enable_alpha=True)
+        bk = self.doc.background
+        default_color = QColor.fromRgb(bk[0], bk[1], bk[2], bk[3])
+        self.background_picker = ColorPicker(default_color, self, "█", enable_alpha=True)
         self.background_picker.colorbutton.setVisible(True)
         self.background_picker.colorbutton.setEnabled(False)
         self.background_picker.color_change = self.onBackgroundChanged
 
         self.glowing_select = QCheckBox("Glowing")
-        self.glowing_select.setChecked(True)
+        #self.glowing_select.setChecked(True)
         self.shadow_select = QCheckBox("Shadow")
-        self.glowing_select.toggled.connect(self.onGlowingShadowChecked)
-        self.shadow_select.toggled.connect(self.onGlowingShadowChecked)
+        self.glowing_select.clicked.connect(self.onGlowingShadowChecked)
+        self.shadow_select.clicked.connect(self.onGlowingShadowChecked)
 
         text_tool_layout.addWidget(QLabel("Alignment:"))
         text_tool_layout.addWidget(self.align_left)
@@ -111,10 +114,6 @@ class TextDisplayPanel(EditPanel):
         copy_panel_widget.setLayout(copy_panel_layout)
         self.main_layout.addWidget(copy_panel_widget)
 
-
-
-
-
     def document(self):
         return self.doc
     
@@ -131,6 +130,8 @@ class TextDisplayPanel(EditPanel):
                                       }" % (r, g, b, point_size)
         self.text_panel.setStyleSheet(sheet)
         self.doc.background = (r, g, b, a)
+
+        self.result.updateCommand()
     
     def onAlignToggled(self, e):
 
@@ -151,6 +152,7 @@ class TextDisplayPanel(EditPanel):
             block.setAlignment(align_dict[align])
             cursor.mergeBlockFormat(block)
             self.doc.align = align
+            self.result.updateCommand()
 
     def onBackgroundChecked(self, e):
         global point_size
@@ -174,6 +176,7 @@ class TextDisplayPanel(EditPanel):
             self.text_panel.setStyleSheet(sheet)
             self.doc.use_background = False
             self.background_picker.colorbutton.setEnabled(False)
+            self.result.updateCommand()
 
     def onGlowingShadowChecked(self, e):
         if self.glowing_select.isChecked():
@@ -185,3 +188,26 @@ class TextDisplayPanel(EditPanel):
             self.doc.shadow = True
         else:
             self.doc.shadow = False
+        self.result.updateCommand()
+
+    def onCommandModeChange(self):
+        pass
+    
+
+    def onSummonCommandUpdate120(self):
+        """
+        To update the textdisplay generate command for mc1.20
+        """
+        return self.doc.genSummonCommand120()
+    
+    def onCopyWallCommandUpdate120(self):
+        """
+        To update the textdisplay generate command, with /give, for mc1.20
+        """
+        pass
+    
+    def onCopyGroundCommandUpdate120(self):
+        """
+        To update the textdisplay generate command, with /give, for mc1.20
+        """
+        pass

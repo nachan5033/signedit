@@ -56,7 +56,7 @@ class TextDisplayDoc(Document):
         self.translation = (0.0,0.0,0.0)
         self.opacity = -1
 
-        self.background = (0,0,0,0) #RGBA
+        self.background = (0,0,0,0xff) #RGBA
         self.use_background = False
 
         self.name = 'text display'
@@ -85,7 +85,9 @@ class TextDisplayDoc(Document):
         if self.use_background:
             # convert RGBA to ARGB
             R, G, B, A = self.background
-            background = A << 24 + R << 16 + G << 8 + B
+            background = (A << 24) + (R << 16) + (G << 8) + B
+            if background > 0x80000000:
+                background = background - 0xffffffff
         if self.shadow:
             shadow_str = 'true'
         else:
@@ -107,7 +109,7 @@ class TextDisplayDoc(Document):
         return self.genSummonCommand120_caching(text_str)
 
 
-    def genWallSign(self, offset = 0.01,y_offset = 0.0,y_cali = False,
+    def genWallSign120(self, offset = 0.01,y_offset = 0.0,y_cali = False,
                     protect_mode = True):
         """
         Generate give command of a wall mode sign
@@ -195,7 +197,7 @@ class TextDisplayDoc(Document):
 
         return sign.getCommand120(Facemodes.FRONT)
 
-    def genGroundSign(self, offset = 0.01,y_offset = 0.0,y_cali = False,
+    def genGroundSign120(self, offset = 0.01,y_offset = 0.0,y_cali = False,
                       protect_mode = True):
         '''
         Generate give command of a ground mode sign

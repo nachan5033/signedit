@@ -11,19 +11,14 @@ def families_str(families: list[str]) -> str:
     return s
 
 class Options:
-    def __init__(self):
+    def __init__(self, load_fonts = False):
         self.fontlist = {} # {minecraft font name : actual font name}
         self.reverse_fontlist = {} # {actual font name : minecraft font name}
         self.default_version = ''
+        self.do_load_fonts = load_fonts
 
-    def loadoptions(self, path = './settings.json'):
-        self.fontlist = {'default' : ['mcprev', 'unimc'],}
-        self.reverse_fontlist = {"'mcprev','unimc'": 'default' }
-
-        with open(path, 'r', encoding='utf-8') as f:
-            opt = json.load(f)
-
-            #load fonts
+    def loadFonts(self, opt):
+         #load fonts
             fonts = opt['fonts']
             for font in fonts:
                 try:
@@ -52,6 +47,16 @@ class Options:
                     for family in s:
                         print(' %s'%family,end='')
                     print('')
+
+    def loadoptions(self, path = './settings.json'):
+        self.fontlist = {'default' : ['mcprev', 'unimc'],}
+        self.reverse_fontlist = {"'mcprev','unimc'": 'default' }
+
+        with open(path, 'r', encoding='utf-8') as f:
+            opt = json.load(f)
+
+            if self.do_load_fonts:
+                self.loadFonts(opt)
 
             #load default version
             self.default_version = opt['default_version']

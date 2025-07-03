@@ -14,11 +14,14 @@ from editpanel import *
 from resultdisplay import *
 from mcedit import *
 from textdisplay import *
+from textdisplay_parse import *
+from sign import *
 
 class FoolTextDisplayPanel(TextDisplayPanel):
 
     def __init__(self, parent = ...):
         super().__init__(parent)
+        self.doc : TextDisplayDoc
 
         self.name = "Text Display(Fool)"
 
@@ -64,10 +67,16 @@ class FoolTextDisplayPanel(TextDisplayPanel):
 
         self.initCopyPanel()
 
-        self.result = ResultDisplay()
+        self.mode_summon.clicked.connect(self.onCommandModeChange)
+        self.mode_copy_ground.clicked.connect(self.onCommandModeChange)
+        self.mode_copy_wall.clicked.connect(self.onCommandModeChange)
+
         self.main_layout.addWidget(self.result)
 
+        self.text_panel.textChanged.connect(self.onTextChange)
+
         self.setLayout(self.main_layout)
+        self.onCommandModeChange()
 
     def updateCommand(self):
         pass
@@ -83,4 +92,42 @@ class FoolTextDisplayPanel(TextDisplayPanel):
     
     def onScaleChange(self, e):
         self.doc.scale = (self.scaler.value(), self.scaler.value())
+
+    def onCommandModeChange(self):
+        if self.mode_summon.isChecked():
+            self.result.registerUpdateFunc('1.20', self.onSummonCommandUpdate120)
+        elif self.mode_copy_wall.isChecked():
+            self.result.registerUpdateFunc('1.20', self.onCopyWallCommandUpdate120)
+        elif self.mode_copy_ground.isChecked():
+            self.result.registerUpdateFunc('1.20', self.onCopyGroundCommandUpdate120)
+        self.result.updateCommand()
+    
+    def onCopyWallCommandUpdate120(self):
+        """
+        To update the textdisplay generate command, with /give, for mc1.20
+        """
+        y_cali = False
+        if self.auto_offsetting.isChecked():
+            y_cali = True
+        offset = self.normal_offset.value()
+        y_offset = self.y_offset.value()
+
+        return self.doc.genWallSign120(offset, y_offset, y_cali)
+    
+    def onCopyGroundCommandUpdate120(self):
+        """
+        To update the textdisplay generate command, with /give, for mc1.20
+        """
+        y_cali = False
+        if self.auto_offsetting.isChecked():
+            y_cali = True
+        offset = self.normal_offset.value()
+        y_offset = self.y_offset.value()
+        print(self.doc.use_background)
+        return self.doc.genGroundSign120(offset, y_offset, y_cali)
+
+    def onTextChange(self):
+        self.doc.html = self.text_panel.toHtml()
+        self.result.updateCommand()
+       
 
