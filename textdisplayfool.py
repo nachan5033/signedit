@@ -38,8 +38,8 @@ class FoolTextDisplayPanel(TextDisplayPanel):
         self.scaler.valueChanged.connect(self.onScaleChange)
 
         self.normal_offset = QDoubleSpinBox()
-        self.normal_offset.setSingleStep(0.1)
-        self.normal_offset.setValue(0)
+        self.normal_offset.setSingleStep(0.01)
+        self.normal_offset.setValue(0.01)
         self.normal_offset.setMinimum(-100)
         self.normal_offset.valueChanged.connect(self.result.updateCommand)
 
@@ -54,6 +54,7 @@ class FoolTextDisplayPanel(TextDisplayPanel):
 
         self.auto_offsetting = QCheckBox()
         self.auto_offsetting.setChecked(True)
+        self.auto_offsetting.toggled.connect(self.updateCommand)
 
         fool_tool_layout.addWidget(QLabel("Scale"))
         fool_tool_layout.addWidget(self.scaler)

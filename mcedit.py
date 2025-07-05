@@ -126,8 +126,8 @@ class MCEdit(QTextEdit):
             font.setPixelSize(point_size)
             doc.setFont(font)
             
-            print(doc.toHtml())
-            newdata.clear()
+            #print(doc.toHtml())
+            #newdata.clear()
             newdata.setHtml(doc.toHtml())
             #self.insertHtml(doc.toHtml())
             #self.setText(doc.toHtml())
@@ -223,19 +223,22 @@ class SignEdit(MCEdit):
             block_format.clearBackground()
             block_format.setAlignment(Qt.AlignCenter)
 
-            char_format.setFontFamilies(['mcprev', 'unimc'])
+            char_format.setFontFamily('')
+            #char_format.setFontFamilies(['mcprev', 'unimc'])
             char_format.setBackground(block_format.background())
 
             cursor.setBlockFormat(block_format)
             cursor.mergeCharFormat(char_format)
 
             font = QFont()
-            font.setFamilies(['mcprev','unimc'])
+            font.setFamily('')
+            #font.setFamilies(['mcprev','unimc'])
             font.setPixelSize(point_size)
             doc.setFont(font)
             
             newdata.clear()
             newdata.setHtml(doc.toHtml())
+            print(doc.toHtml())
             self.syncStyle()
             super().insertFromMimeData(newdata)
         elif source.hasUrls():
