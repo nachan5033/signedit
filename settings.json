@@ -2,12 +2,20 @@
   "fonts":
   [
     {
-      "name" : "test",
-      "family" : "Comic Sans MS,宋体"
+      "name" : "younyao:sourcehans",
+      "family" : "Source Han Serif SC"
     },
     {
-      "name":"test2",
-      "family":"Courier New"
+      "name":"younyao:sourcehans_sans",
+      "family":"Source Han Sans SC Normal"
+    },
+    {
+      "name": "younyao:cooperkai",
+      "family": "CooperZhengKai"
+    },
+    {
+      "name": "younyao:sukothong",
+      "family": "jf-openhuninn-2.1"
     }
   ],
   "extra_fonts":
@@ -15,7 +23,11 @@
     "./src/mcprev.otf",
     "./src/mcprev-bold.otf",
     "./src/unimc.otf",
-    "./src/unimc-bold.otf"
+    "./src/unimc-bold.otf",
+    "./src/SourceHanSerifSC-Regular.otf",
+    "./src/CooperZhengKai-1.4.ttf",
+    "./src/sukothong.ttf",
+    "./src/SourceHanSansSC-Normal.otf"
   ],
   "default_version" : "1.20",
   "max_pic_height":256,
