@@ -426,6 +426,7 @@ class mainwin(QMainWindow):
             else:
                 fontfamily = self.options.fontlist[selectedfont]
                 textformat = QTextCharFormat()
+                textformat.setFontFamily('')
                 textformat.setFontFamilies(fontfamily)
                 cursor.beginEditBlock()
                 cursor.mergeCharFormat(textformat)
